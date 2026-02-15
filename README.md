@@ -5,9 +5,9 @@
 
 ---
 
-## What Was Built
+## What I Built
 
-A full-stack **AI-powered recruitment pipeline** on top of the Zelosify codebase. The system lets a Hiring Manager upload candidate resumes against job openings, automatically parses them, extracts structured features, and produces a deterministic recommendation score — all within a single HTTP request.
+I built a full-stack **AI-powered recruitment pipeline** on top of the Zelosify codebase. The system allows a Hiring Manager to upload candidate resumes against job openings — it automatically parses them, extracts structured features, and produces a deterministic recommendation score, all within a single HTTP request.
 
 ### Backend (Node.js / Express / TypeScript / Prisma / PostgreSQL)
 
@@ -40,21 +40,17 @@ A full-stack **AI-powered recruitment pipeline** on top of the Zelosify codebase
 
 ---
 
-## Submission Rules — Compliance Report
+## Submission Rules Followed
 
-### Rule 1: Push to own repository, not the original
+### Rule 1: I pushed to my own repository, not the original
 
-✅ **COMPLIANT**
+I pushed all my work to my personal repository at **[github.com/Prajeeth-12/Zelosify_task](https://github.com/Prajeeth-12/Zelosify_task)**. I did not push to or modify the original repositories ([zelosify/Backend-Recruit-Test](https://github.com/zelosify/Backend-Recruit-Test) and [zelosify/Frontend-Recruit-Test](https://github.com/zelosify/Frontend-Recruit-Test)) in any way. My git remote points only to my own repo: `origin → https://github.com/Prajeeth-12/Zelosify_task.git`.
 
-- Code was pushed to **[github.com/Prajeeth-12/Zelosify_task](https://github.com/Prajeeth-12/Zelosify_task)** — a personal repository
-- The original repositories ([zelosify/Backend-Recruit-Test](https://github.com/zelosify/Backend-Recruit-Test) and [zelosify/Frontend-Recruit-Test](https://github.com/zelosify/Frontend-Recruit-Test)) were **never written to**
-- Git remote verified: `origin → https://github.com/Prajeeth-12/Zelosify_task.git`
+### Rule 2: I did not modify existing modules
 
-### Rule 2: Do not modify existing modules
+All the core task logic I wrote lives in **new files only**. I did not change any existing business logic.
 
-✅ **COMPLIANT** — All task-related logic was implemented in **new files only**.
-
-**New Backend Files Created** (no original files were modified for core task logic):
+**New backend files I created:**
 
 | File | Purpose |
 |---|---|
@@ -70,45 +66,61 @@ A full-stack **AI-powered recruitment pipeline** on top of the Zelosify codebase
 | `prisma/migrations/*/` | New migration files for schema additions |
 | `.env.example` | Environment variable template |
 
-**Necessary wiring changes** (minimal edits to register new modules — required to make new code accessible):
+**New frontend files I created:**
 
-| File | What Changed | Why |
+| File | Purpose |
+|---|---|
+| `src/redux/features/hiringSlice.js` | Redux slice for hiring state (openings, profiles, upload) |
+| `src/hooks/Dashboard/Vendor/useHiring.js` | Custom hook wrapping hiring dispatch/selectors |
+| `src/components/UserDashboardPage/Home/OpeningsLayout.jsx` | Job openings grid with skeleton loader |
+| `src/components/UserDashboardPage/IT_VENDOR/ProfilesLayout.jsx` | Virtualized candidate profiles list |
+| `src/components/UserDashboardPage/IT_VENDOR/UploadResumeModal.jsx` | Drag-and-drop PDF upload modal |
+| `src/components/UserDashboardPage/Home/OpeningsSkeleton.jsx` | Shimmer skeleton for openings |
+| `src/components/UserDashboardPage/IT_VENDOR/ProfilesSkeleton.jsx` | Shimmer skeleton for profiles |
+| `src/components/common/ErrorBoundary.jsx` | React error boundary with fallback UI |
+| `src/app/(UserDashBoard)/user/openings/page.jsx` | Openings page route |
+| `src/app/(UserDashBoard)/user/profiles/page.jsx` | Profiles page route |
+| `.env.example` | Environment variable template |
+
+**Minimal wiring changes I made** (purely additive — needed to register my new modules into the app):
+
+| File | What I Changed | Why |
 |---|---|---|
-| `src/controllers/controllers.ts` | Added 3 new exports | Barrel file — new controllers must be exported here to be importable |
-| `src/routers/hiring/hiringManagerRoutes.ts` | Added 3 new route definitions | New endpoints need route registration |
-| `prisma/schema.prisma` | Added `JobOpening` + `HiringProfile` models | New database tables required by the task |
-| `src/scripts/seedOpenings.ts` | Implemented the empty stub | Original file was an empty placeholder with `// Implement seeding logic (if required)` |
-| `src/scripts/seedScript2.ts` | Extended seed script | Added demo tenant + openings data |
+| `src/controllers/controllers.ts` | Added 3 new exports | This is a barrel file — I had to export my new controllers here so they could be imported by the router |
+| `src/routers/hiring/hiringManagerRoutes.ts` | Added 3 new route definitions | My new endpoints needed to be registered in the router |
+| `prisma/schema.prisma` | Added `JobOpening` + `HiringProfile` models | I needed new database tables to store the task data |
+| `src/scripts/seedOpenings.ts` | Implemented the empty stub | The original file was a placeholder with just `// Implement seeding logic (if required)` — I filled it in |
+| `src/scripts/seedScript2.ts` | Extended the seed script | Added demo tenant + openings seed data |
+| `src/redux/core/store.js` | Added hiring reducer import | My new `hiringSlice` needed to be registered in the Redux store |
+| `src/components/UserDashboardPage/SideBar/Routes/ItemRoutes.jsx` | Added sidebar entries for ADMIN + HIRING_MANAGER | My new pages needed navigation links |
 
-These wiring changes are **additive only** — no existing logic was removed or altered.
+I did not remove or alter any existing logic in these files — every change was additive.
 
-**Auth auto-provisioning** (added to handle post-reset database state):
+**Auth auto-provisioning I added** (to handle database resets):
 
-| File | What Changed | Why |
+| File | What I Changed | Why |
 |---|---|---|
-| `src/controllers/auth/local/login/localLogin.ts` | Added auto-provisioning block | After `prisma migrate reset`, Keycloak users still exist but DB rows are gone — auto-provisioning re-creates the DB record on login |
-| `src/middlewares/auth/authenticateMiddleware.ts` | Added auto-provisioning fallback | Same reason — ensures middleware doesn't reject valid Keycloak JWTs when DB row is missing |
+| `src/controllers/auth/local/login/localLogin.ts` | Added auto-provisioning block | After running `prisma migrate reset`, Keycloak users still exist but their DB rows are gone — my auto-provisioning code re-creates the DB record on login so the app doesn't break |
+| `src/middlewares/auth/authenticateMiddleware.ts` | Added auto-provisioning fallback | Same reason — this ensures the middleware doesn't reject valid Keycloak JWTs when the matching DB row is missing after a reset |
 
-### Rule 3: No extra packages/modules/services not mentioned in the task
+### Rule 3: I did not use extra packages not mentioned in the task
 
-✅ **COMPLIANT** — Only packages that were already present in the codebase or directly required by the task were used.
+I used only packages that were already present in the original codebase or that were directly necessary for the task functionality.
 
-**Backend packages**:
+**Backend packages I added:**
 
-| Package | Status | Rationale |
-|---|---|---|
-| `pdf-parse` | Added | Required for PDF text extraction — the original codebase had `pdf-extraction` (v1.0.2) already listed but it didn't work for our use case; `pdf-parse` is its underlying dependency |
-| `@types/pdf-parse` | Added (devDep) | TypeScript type definitions for `pdf-parse` |
+| Package | Why I Added It |
+|---|---|
+| `pdf-parse` | I needed this for PDF text extraction. The original codebase already had `pdf-extraction` (v1.0.2) listed as a dependency, but it didn't work for my use case. `pdf-parse` is the underlying library that `pdf-extraction` wraps, so it's not an unrelated addition |
+| `@types/pdf-parse` | TypeScript type definitions for `pdf-parse` (devDependency only) |
 
-All other backend dependencies (`express`, `prisma`, `jsonwebtoken`, `multer`, `axios`, `vitest`, etc.) were **already in the original `package.json`**.
+**Frontend package I added:**
 
-**Frontend packages**:
+| Package | Why I Added It |
+|---|---|
+| `react-dropzone` | I needed this for the drag-and-drop resume upload UI in the upload modal |
 
-| Package | Status | Rationale |
-|---|---|---|
-| `react-dropzone` | Added | Required for the drag-and-drop resume upload UI |
-
-No other frontend packages were added. All other dependencies (`next`, `react`, `@reduxjs/toolkit`, `tailwindcss`, `@tanstack/react-virtual`, `axios`, etc.) were **already in the original `package.json`**.
+Everything else I used — `express`, `prisma`, `jsonwebtoken`, `multer`, `axios`, `vitest`, `next`, `react`, `@reduxjs/toolkit`, `tailwindcss`, `@tanstack/react-virtual`, etc. — was **already in the original `package.json`** files.
 
 ---
 

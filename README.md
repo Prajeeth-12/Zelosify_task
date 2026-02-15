@@ -5,13 +5,19 @@
 
 ---
 
-## What I Built
+## The Task
 
-I built a full-stack **AI-powered recruitment pipeline** on top of the Zelosify codebase. The system allows a Hiring Manager to upload candidate resumes against job openings — it automatically parses them, extracts structured features, and produces a deterministic recommendation score, all within a single HTTP request.
+I was given an existing Zelosify recruitment platform codebase (backend + frontend) and tasked with building an **AI-powered hiring pipeline** on top of it. The task required me to implement a system where a Hiring Manager can upload candidate resumes against job openings, and the system automatically parses, extracts features, scores, and recommends candidates — all through a deterministic scoring agent.
+
+The task came with **3 strict rules** I had to follow (detailed below in the [Submission Rules](#submission-rules-i-followed) section).
+
+---
+
+## How I Completed It
 
 ### Backend (Node.js / Express / TypeScript / Prisma / PostgreSQL)
 
-| Feature | Description |
+| What I Implemented | Details |
 |---|---|
 | **Resume Parser** | Extracts raw text from uploaded PDF resumes using `pdf-parse` |
 | **Feature Extractor** | NLP/regex-based extraction of skills, experience, location, and education from resume text |
@@ -27,7 +33,7 @@ I built a full-stack **AI-powered recruitment pipeline** on top of the Zelosify 
 
 ### Frontend (Next.js 15 / React 19 / Redux Toolkit / Tailwind CSS)
 
-| Feature | Description |
+| What I Implemented | Details |
 |---|---|
 | **Job Openings Grid** | Card-based layout showing all openings with department badges and skill chips |
 | **Candidate Profiles List** | Virtualized table (`@tanstack/react-virtual`) rendering 50+ profiles without DOM bloat |
@@ -40,13 +46,15 @@ I built a full-stack **AI-powered recruitment pipeline** on top of the Zelosify 
 
 ---
 
-## Submission Rules Followed
+## Submission Rules I Followed
 
-### Rule 1: I pushed to my own repository, not the original
+The task had 3 strict rules. Here's how I followed each one:
+
+### Rule 1: Push to my own repository, not the original
 
 I pushed all my work to my personal repository at **[github.com/Prajeeth-12/Zelosify_task](https://github.com/Prajeeth-12/Zelosify_task)**. I did not push to or modify the original repositories ([zelosify/Backend-Recruit-Test](https://github.com/zelosify/Backend-Recruit-Test) and [zelosify/Frontend-Recruit-Test](https://github.com/zelosify/Frontend-Recruit-Test)) in any way. My git remote points only to my own repo: `origin → https://github.com/Prajeeth-12/Zelosify_task.git`.
 
-### Rule 2: I did not modify existing modules
+### Rule 2: Do not modify existing modules
 
 All the core task logic I wrote lives in **new files only**. I did not change any existing business logic.
 
@@ -103,7 +111,7 @@ I did not remove or alter any existing logic in these files — every change was
 | `src/controllers/auth/local/login/localLogin.ts` | Added auto-provisioning block | After running `prisma migrate reset`, Keycloak users still exist but their DB rows are gone — my auto-provisioning code re-creates the DB record on login so the app doesn't break |
 | `src/middlewares/auth/authenticateMiddleware.ts` | Added auto-provisioning fallback | Same reason — this ensures the middleware doesn't reject valid Keycloak JWTs when the matching DB row is missing after a reset |
 
-### Rule 3: I did not use extra packages not mentioned in the task
+### Rule 3: Do not use extra packages/modules/services not mentioned in the task
 
 I used only packages that were already present in the original codebase or that were directly necessary for the task functionality.
 

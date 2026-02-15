@@ -1,55 +1,74 @@
-# Zelosify — AI-Powered Recruitment Platform
+# Zelosify Recruitment Module — Task Submission
 
-**Candidate**: Prajeeth  
-**Project**: Production-Grade Multi-Tenant AI Agent Hiring Module  
+**Submitted by**: Prajeeth  
 **Repository**: [github.com/Prajeeth-12/Zelosify_task](https://github.com/Prajeeth-12/Zelosify_task)
 
 ---
 
-## 🚀 Executive Summary
+## 🏗️ Architectural Overview
 
-I have implemented a production-ready hiring pipeline on top of the Zelosify base. This system enables IT Vendors to securely submit candidates and Hiring Managers to receive instant, deterministic AI evaluations.
+This project is a production-grade multi-tenant hiring platform designed to move beyond standard CRUD operations. The core of the system is a **Deterministic AI Agent** that automates candidate evaluation while maintaining **100% auditability** and strict performance SLAs.
 
-Unlike a simple CRUD app, this platform features a **Structured AI Agent Architecture** that parses resumes and calculates scores without direct LLM calls, ensuring **100% explainability** and **sub-100ms latency**.
+The platform enables IT Vendors to securely submit candidates and Hiring Managers to receive instant, deterministic AI evaluations — all without direct LLM calls, ensuring **100% explainability** and **sub-100ms latency**.
 
 ---
 
-## 🤖 The AI Agent Architecture
+## 🤖 Deterministic AI Agent Design
 
-The core requirement was to build a multi-stage, deterministic agent. I strictly avoided "LLM Wrappers" to maintain auditability and performance.
+Unlike a "black box" LLM wrapper, this system utilizes a structured pipeline to ensure consistent and explainable results.
+
+### The Pipeline Flow
+
+1. **Resume Parser Tool**: Securely retrieves PDF/PPTX files from AWS S3 and extracts raw text using `pdf-parse`.
+2. **Feature Extractor**: Analyzes unstructured text to build a Feature Vector containing experience years, skill sets, and location data via NLP/Regex-based extraction.
+3. **Matching Engine**: Normalizes extracted data against job requirements using a comprehensive 300+ entry Skill Alias Map (`"reactjs"` → `"React"`, `"js"` → `"JavaScript"`).
+4. **Scoring Engine**: Applies the **Mandatory Final Score Formula**:
+
+$$FinalScore = (0.5 \times skillMatchScore) + (0.3 \times experienceMatchScore) + (0.2 \times locationMatchScore)$$
+
+5. **Decision Policy**: Categorizes candidates into:
+   - **Recommended** ($\ge 0.75$)
+   - **Borderline** ($0.50 - 0.74$)
+   - **Not Recommended** ($< 0.50$)
 
 | Component | Responsibility | Technical Implementation |
 |---|---|---|
-| **Resume Parser** | S3 Retrieval & Text Extraction | Fetches PDF from S3; uses `pdf-parse` for extraction |
+| **Resume Parser** | S3 Retrieval & Text Extraction | Fetches PDF/PPTX from S3; uses `pdf-parse` for extraction |
 | **Feature Extractor** | Metadata Analysis | NLP/Regex-based extraction of Skills, Experience, and Location |
 | **Matching Engine** | Comparison Logic | Normalizes data using a 300+ entry Skill Alias Map |
-| **Scoring Engine** | Mandatory Math | Enforces weighted formula: **50% Skills / 30% Exp / 20% Loc** |
+| **Scoring Engine** | Mandatory Math | Enforces the weighted formula above |
 | **Decision Policy** | Categorization | Assigns `Recommended`, `Borderline`, or `Not Recommended` status |
 
 ---
 
-## 🛡️ Production-Grade Implementation Details
+## 🔐 Security & Multi-Tenancy
 
-### 1. Security & Multi-Tenant Isolation
+The system is built on a **"Security-First"** principle to ensure complete data isolation between different organizations.
 
-- **Strict RBAC**: Implemented API-level guards ensuring `IT_VENDOR` and `HIRING_MANAGER` roles cannot bypass their respective silos.
-- **Data Partitioning**: Every database query is strictly scoped by `tenantId`. A user from "Bruce Wayne Corp" can never access profiles from another tenant.
+- **Tenant Isolation**: Every database query is strictly filtered by `tenantId` at the API and Prisma layer to prevent any possibility of cross-tenant data leakage. A user from "Bruce Wayne Corp" can never access profiles from another tenant.
+- **RBAC Enforcement**: Strict Role-Based Access Control is enforced via Keycloak and custom middleware, separating `IT_VENDOR` and `HIRING_MANAGER` personas.
+- **Endpoint Protection**: Mandatory route guards ensure that vendors cannot view AI recommendations or other vendors' uploads.
 - **Cross-Tenant Guard**: Added specific logic to prevent a Vendor from submitting a profile to a job opening belonging to a different tenant.
 
-### 2. Transaction Integrity (ACID)
+---
 
-- **Atomic Submissions**: Used `prisma.$transaction()` to wrap the entire pipeline (parse → extract → score → persist).
-- **Consistency**: If the AI Agent fails to score or the database update crashes, the profile record is rolled back, preventing "orphan" data.
+## ⚡ Reliability & Performance
 
-### 3. Observability & Performance
+- **ACID Integrity**: All candidate submissions are wrapped in `prisma.$transaction()`. This ensures that the S3 file reference and AI scoring results are persisted atomically — no partial or "orphan" records are ever created.
+- **Observability**: The backend utilizes **Structured JSON Logging** to track the entire lifecycle of a request, including specific timestamps for `parsingTime` and `matchingTime`, with ELK-stack compatible output.
+- **Performance SLA**: The system consistently meets the required **P95 latency of < 2000ms** per profile evaluation. My implementation achieves **~58ms** on average.
 
-- **Structured Logging**: Replaced standard console logs with a JSON Logger. Each process outputs `parsingTimeMs`, `matchingTimeMs`, and `finalScore` for ELK-stack compatibility.
-- **Latency Tracking**: Every recommendation calculates and stores `recommendationLatencyMs` in the DB. My implementation consistently achieves **~58ms** (well within the 2000ms P95 SLA).
+---
 
-### 4. Frontend Hardening
+## 🎨 Frontend Excellence
 
-- **Table Virtualization**: Used `@tanstack/react-virtual` for the Candidate Profiles list to ensure 60FPS performance even with 50+ records.
-- **UX Stability**: Implemented Skeleton Loaders to prevent layout shifts and Error Boundaries to catch async parsing failures gracefully.
+The frontend is optimized for high-volume data handling and a seamless user experience.
+
+- **Table Virtualization**: Implemented via `@tanstack/react-virtual` to efficiently render lists exceeding 50 candidate records without performance degradation.
+- **UX Robustness**: Integrated **Skeleton Loaders** for perceived performance and **Error Boundaries** to ensure the dashboard remains stable even during upstream failures.
+- **Decision Badges**: `Recommended` (green), `Borderline` (yellow), `Not Recommended` (red) per candidate.
+- **Resume Upload**: Drag-and-drop PDF upload modal with progress indication.
+- **Redux State Management**: `hiringSlice` with async thunks for openings, profiles, and profile submission.
 
 ---
 
@@ -138,33 +157,33 @@ Everything else (`express`, `prisma`, `jsonwebtoken`, `multer`, `axios`, `vitest
 
 ---
 
-## 🛠️ Setup & Seeding
+## ⚙️ Setup Instructions
 
-The project includes a specialized seeding script that pre-populates the environment for review:
+### Prerequisites
 
-- **Tenant**: "Bruce Wayne Corp"
-- **Openings**: 12 Mandatory Job Openings across various departments
+- **Node.js** (v18+)
+- **Docker** (for PostgreSQL and Keycloak)
+- **AWS S3 Bucket** (for resume storage)
 
-**Steps:**
+### Backend Setup
 
-1. **Infra**: `docker compose up -d`
-2. **Backend**: `npm install` → `npx prisma migrate deploy` → `npx prisma generate` → `npx prisma db seed` → `npm run dev`
-3. **Frontend**: `npm install` → `npm run dev`
+1. Navigate to `/Backend-Recruit-Test/Server`.
+2. Start infrastructure: `docker compose up -d`.
+3. Install dependencies: `npm install`.
+4. Configure `.env` using `.env.example` (include S3 and Keycloak credentials).
+5. Initialize Database:
 
 ```bash
-# Backend (http://localhost:5000)
-cd Backend-Recruit-Test/Server
-docker compose up -d
-npm install
-cp .env.example .env    # Fill in S3 keys and Keycloak secrets
 npx prisma migrate deploy
 npx prisma generate
-npx prisma db seed
-npm run dev
-
-# Frontend (http://localhost:5173)
-cd Frontend-Recruit-Test
-npm install
-cp .env.example .env
-npm run dev
+npx prisma db seed    # Seeds "Bruce Wayne Corp" with 12 openings
 ```
+
+6. Start: `npm run dev` → http://localhost:5000
+
+### Frontend Setup
+
+1. Navigate to `/Frontend-Recruit-Test`.
+2. Install dependencies: `npm install`.
+3. Configure `.env` using `.env.example`.
+4. Start: `npm run dev` → http://localhost:5173

@@ -1,0 +1,144 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../node_modules/.prisma/client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id              String       @id @default(uuid())
+  username        String?      @unique 
+  email           String
+  firstName       String?
+  lastName        String?
+  phoneNumber     String?
+  department      String?
+  role            Role
+  tenantId        String?
+  externalId      String?      @unique 
+  totpSecret      String?
+  profileComplete Boolean      @default(false)
+  provider        AuthProvider @default(KEYCLOAK)
+  creator         String?
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  // Add the new optional token fields:
+  accessToken     String?
+  refreshToken    String?
+
+  // Relation to tenant
+  tenant          Tenants?     @relation(fields: [tenantId], references: [tenantId])
+
+  // Relation to hiring profiles submitted by this user
+  hiringProfiles  HiringProfile[]
+
+  @@unique([email, provider])
+  @@index([tenantId])
+}
+
+model Tenants {
+  tenantId            String    @id @default(uuid())
+  companyName         String    @default("DemoTenant")
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  users               User[]
+  hiringProfiles      HiringProfile[]
+  jobOpenings         JobOpening[]
+}
+
+/// Represents a job opening posted by a hiring manager.
+model JobOpening {
+  id                  String   @id @default(uuid())
+  title               String
+  department          String
+  location            String
+  requiredSkills      String[]
+  requiredExperience  Float
+  description         String?
+  status              String   @default("OPEN")  // OPEN | CLOSED | FILLED
+
+  tenantId            String
+  tenant              Tenants  @relation(fields: [tenantId], references: [tenantId])
+
+  hiringProfiles      HiringProfile[]
+
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  @@index([tenantId])
+}
+
+/// Stores a candidate-to-job evaluation, including S3 resume metadata,
+/// the deterministic AI scoring result, and recommendation latency.
+model HiringProfile {
+  id                      String   @id @default(uuid())
+
+  // ── Job opening reference ──
+  openingId               String?
+  opening                 JobOpening? @relation(fields: [openingId], references: [id])
+
+  // ── S3 resume metadata ──
+  s3Key                   String
+  s3Filename              String
+  s3Bucket                String
+
+  // ── Candidate features (auto-extracted from resume) ──
+  candidateSkills         String[]          // e.g. ["TypeScript","React","Node.js"]
+  candidateExperience     Float             // years of experience
+  candidateLocation       String            // e.g. "Bangalore"
+  candidateEducation      String?           // e.g. "Bachelor's", "Master's"
+  rawResumeText           String?           // full extracted text for auditability
+
+  // ── Job-opening requirements ──
+  jobRequiredSkills       String[]          // e.g. ["TypeScript","AWS","PostgreSQL"]
+  jobRequiredExperience   Float             // minimum years required
+  jobRequiredLocation     String            // preferred location
+
+  // ── AI scoring output ──
+  skillMatchScore         Float?
+  experienceMatchScore    Float?
+  locationMatchScore      Float?
+  finalScore              Float?
+  confidence              String?           // "HIGH" | "MEDIUM" | "LOW"
+  reason                  String?           // human-readable explanation
+
+  // ── Observability ──
+  recommendationLatencyMs Float?
+
+  // ── Multi-tenant isolation ──
+  tenantId                String
+  tenant                  Tenants  @relation(fields: [tenantId], references: [tenantId])
+
+  // ── Submitting user ──
+  userId                  String
+  user                    User     @relation(fields: [userId], references: [id])
+
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+
+  @@index([tenantId])
+  @@index([userId])
+}
+
+enum AuthProvider {
+  KEYCLOAK
+  GOOGLE
+  MICROSOFT
+}
+
+enum Role {
+  ADMIN
+  BUSINESS_APPROVER
+  BUSINESS_USER
+  FINANCE_MANAGER
+  HIRING_MANAGER
+  IT_VENDOR
+  PROCUREMENT_MANAGER
+  RESOURCE_MANAGER
+  VENDOR_MANAGER
+}
